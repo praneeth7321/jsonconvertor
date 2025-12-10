@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit PSD Layers</title>
+    <!-- Use a modern font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Responsive CSS -->
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 20px;
+            background-color: #f9fafb;
+            color: #111827;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #1f2937;
+        }
+        .download-btn {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .download-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 500;
+            color: #374151;
+        }
+        input, select {
+            width: 80px; /* Reduced width for placeholders */
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: #111827;
+            background-color: #f9fafb;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            th {
+                display: none;
+            }
+            tr {
+                margin-bottom: 15px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                background-color: #ffffff;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            td::before {
+                content: attr(data-label);
+                font-weight: 500;
+                color: #374151;
+                margin-right: 10px;
+            }
+            input, select {
+                width: 60%;
+            }
+        }
+    </style>
+    <script>
+        let jsonData = {{ json_data | tojson }};
+
+        // Function to update jsonData when input fields change
+        function updateLayerData(index, field, value) {
+            jsonData.layers[index][field] = value;
+        }
+
+        // Function to download JSON
+        function downloadJSON() {
+            fetch('/save_json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(jsonData)
+            }).then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                window.location.href = "/download_json";
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Edit PSD Layers</h1>
+
+    <!-- Text Layers Section -->
+    <div class="section-title">Text Layers</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Width</th>
+                <th>Height</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>Text</th>
+                <th>Font</th>
+                <th>Justification</th>
+                <th>Color</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody id="textLayerTable">
+            {% for layer in json_data.layers %}
+                {% if layer.type == "text" %}
+                <tr>
+                    <td data-label="Name">{{ layer.name }}</td>
+                    <td data-label="Width">
+                        <input type="text" value="{{ layer.width }}" onchange="updateLayerData({{ loop.index0 }}, 'width', this.value)" placeholder="Width">
+                    </td>
+                    <td data-label="Height">
+                        <input type="text" value="{{ layer.height }}" onchange="updateLayerData({{ loop.index0 }}, 'height', this.value)" placeholder="Height">
+                    </td>
+                    <td data-label="X">
+                        <input type="text" value="{{ layer.x }}" onchange="updateLayerData({{ loop.index0 }}, 'x', this.value)" placeholder="X">
+                    </td>
+                    <td data-label="Y">
+                        <input type="text" value="{{ layer.y }}" onchange="updateLayerData({{ loop.index0 }}, 'y', this.value)" placeholder="Y">
+                    </td>
+                    <td data-label="Text">
+                        <input type="text" value="{{ layer.text }}" onchange="updateLayerData({{ loop.index0 }}, 'text', this.value)" placeholder="Text">
+                    </td>
+                    <td data-label="Font">
+                        <input type="text" value="{{ layer.font | default('Unknown') }}" onchange="updateLayerData({{ loop.index0 }}, 'font', this.value)" placeholder="Font">
+                    </td>
+                    <td data-label="Justification">
+                        <select onchange="updateLayerData({{ loop.index0 }}, 'justification', this.value)">
+                            <option value="left" {% if layer.justification == 'left' %}selected{% endif %}>Left</option>
+                            <option value="right" {% if layer.justification == 'right' %}selected{% endif %}>Right</option>
+                            <option value="center" {% if layer.justification == 'center' %}selected{% endif %}>Center</option>
+                        </select>
+                    </td>
+                    <td data-label="Color">
+                        <input type="text" value="{{ layer.color | default('0x000000') }}" onchange="updateLayerData({{ loop.index0 }}, 'color', this.value)" placeholder="Color">
+                    </td>
+                    <td data-label="Size">
+                        <input type="text" value="{{ layer.size | default(48) }}" onchange="updateLayerData({{ loop.index0 }}, 'size', this.value)" placeholder="Size">
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Image Layers Section -->
+    <div class="section-title">Image Layers</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Width</th>
+                <th>Height</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>Source</th>
+            </tr>
+        </thead>
+        <tbody id="imageLayerTable">
+            {% for layer in json_data.layers %}
+                {% if layer.type == "image" %}
+                <tr>
+                    <td data-label="Name">{{ layer.name }}</td>
+                    <td data-label="Width"><input type="text" value="{{ layer.width }}" readonly placeholder="Width"></td>
+                    <td data-label="Height"><input type="text" value="{{ layer.height }}" readonly placeholder="Height"></td>
+                    <td data-label="X"><input type="text" value="{{ layer.x }}" readonly placeholder="X"></td>
+                    <td data-label="Y"><input type="text" value="{{ layer.y }}" readonly placeholder="Y"></td>
+                    <td data-label="Source"><input type="text" value="{{ layer.src }}" readonly placeholder="Source"></td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Download JSON Button -->
+    <button class="download-btn" onclick="downloadJSON()">Download JSON</button>
+</body>
+</html>
